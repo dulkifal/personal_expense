@@ -47,6 +47,14 @@ class TaskNotifier extends StateNotifier<AsyncValue<void>> {
       state = AsyncError(e, st);
     }
   }
+
+  Future<void> updateTaskProperties(FinancialTask task) async {
+    try {
+      await _repository.updateTask(task);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
 }
 
 final taskControllerProvider =

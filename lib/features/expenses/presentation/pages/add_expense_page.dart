@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mmas_money_tracker/features/expenses/presentation/providers/expense_provider.dart';
+import 'package:mmas_money_tracker/features/expenses/domain/models/expense.dart';
 
 class AddExpensePage extends ConsumerStatefulWidget {
-  const AddExpensePage({super.key});
+  final Expense? expense;
+  const AddExpensePage({super.key, this.expense});
 
   @override
   ConsumerState<AddExpensePage> createState() => _AddExpensePageState();
@@ -11,10 +13,10 @@ class AddExpensePage extends ConsumerStatefulWidget {
 
 class _AddExpensePageState extends ConsumerState<AddExpensePage> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _amountController = TextEditingController();
-  String _selectedCategory = 'Food';
-  DateTime _selectedDate = DateTime.now();
+  late TextEditingController _titleController;
+  late TextEditingController _amountController;
+  late String _selectedCategory;
+  late DateTime _selectedDate;
 
   final List<String> _categories = [
     'Food',
@@ -24,6 +26,15 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
     'Bills',
     'Other'
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.expense?.title ?? '');
+    _amountController = TextEditingController(text: widget.expense?.amount.toString() ?? '');
+    _selectedCategory = widget.expense?.category ?? 'Food';
+    _selectedDate = widget.expense?.date ?? DateTime.now();
+  }
 
   @override
   void dispose() {
@@ -39,12 +50,24 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
 
       if (amount == null) return;
 
-      await ref.read(expenseControllerProvider.notifier).addExpense(
-            title: title,
-            amount: amount,
-            date: _selectedDate,
-            category: _selectedCategory,
-          );
+      if (widget.expense != null) {
+        // Update existing expense
+        final updatedExpense = widget.expense!.copyWith(
+          title: title,
+          amount: amount,
+          date: _selectedDate,
+          category: _selectedCategory,
+        );
+        await ref.read(expenseControllerProvider.notifier).updateExpense(updatedExpense);
+      } else {
+        // Add new expense
+        await ref.read(expenseControllerProvider.notifier).addExpense(
+              title: title,
+              amount: amount,
+              date: _selectedDate,
+              category: _selectedCategory,
+            );
+      }
 
       if (mounted) {
         Navigator.pop(context);
@@ -55,10 +78,11 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isEditing = widget.expense != null;
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Expense'),
+        title: Text(isEditing ? 'Edit Expense' : 'Add Expense'),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -178,7 +202,7 @@ class _AddExpensePageState extends ConsumerState<AddExpensePage> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: const Text('Save Expense', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: Text(isEditing ? 'Update Expense' : 'Save Expense', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ],
           ),

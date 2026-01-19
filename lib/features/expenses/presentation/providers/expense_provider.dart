@@ -44,6 +44,16 @@ class ExpenseNotifier extends StateNotifier<AsyncValue<void>> {
       state = AsyncError(e, st);
     }
   }
+
+  Future<void> updateExpense(Expense expense) async {
+    state = const AsyncLoading();
+    try {
+      await _repository.updateExpense(expense);
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+    }
+  }
 }
 
 final expenseControllerProvider =

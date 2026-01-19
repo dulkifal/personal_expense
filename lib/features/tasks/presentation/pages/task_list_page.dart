@@ -12,10 +12,10 @@ class FinancialTaskListPage extends ConsumerStatefulWidget {
 }
 
 class _FinancialTaskListPageState extends ConsumerState<FinancialTaskListPage> {
-  void _showAddTaskDialog(BuildContext context) {
-    final titleController = TextEditingController();
-    DateTime selectedDate = DateTime.now();
-    String selectedPriority = 'Medium';
+  void _showAddTaskDialog(BuildContext context, {FinancialTask? task}) {
+    final titleController = TextEditingController(text: task?.title ?? '');
+    DateTime selectedDate = task?.dueDate ?? DateTime.now();
+    String selectedPriority = task?.priority ?? 'Medium';
     // Using a list for priorities
     final priorities = ['High', 'Medium', 'Low'];
 
@@ -39,7 +39,7 @@ class _FinancialTaskListPageState extends ConsumerState<FinancialTaskListPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'New Financial Task',
+                  task != null ? 'Edit Financial Task' : 'New Financial Task',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -108,15 +108,26 @@ class _FinancialTaskListPageState extends ConsumerState<FinancialTaskListPage> {
                 FilledButton(
                   onPressed: () {
                     if (titleController.text.isNotEmpty) {
-                      ref.read(taskControllerProvider.notifier).addTask(
-                            title: titleController.text,
-                            dueDate: selectedDate,
-                            priority: selectedPriority,
-                          );
+                      if (task != null) {
+                        // Update existing task
+                        final updatedTask = task.copyWith(
+                          title: titleController.text,
+                          dueDate: selectedDate,
+                          priority: selectedPriority,
+                        );
+                        ref.read(taskControllerProvider.notifier).updateTaskProperties(updatedTask);
+                      } else {
+                        // Add new task
+                        ref.read(taskControllerProvider.notifier).addTask(
+                              title: titleController.text,
+                              dueDate: selectedDate,
+                              priority: selectedPriority,
+                            );
+                      }
                       Navigator.pop(context);
                     }
                   },
-                  child: const Text('Add Task'),
+                  child: Text(task != null ? 'Update Task' : 'Add Task'),
                 ),
                 const SizedBox(height: 24),
               ],
@@ -184,6 +195,7 @@ class _FinancialTaskListPageState extends ConsumerState<FinancialTaskListPage> {
                   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   elevation: 2,
                   child: ListTile(
+                    onTap: () => _showAddTaskDialog(context, task: task),
                     leading: Checkbox(
                       value: task.isCompleted,
                       onChanged: (_) {

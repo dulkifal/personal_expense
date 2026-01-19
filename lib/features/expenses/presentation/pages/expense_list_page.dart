@@ -89,7 +89,17 @@ class ExpenseListPage extends ConsumerWidget {
                     SnackBar(content: Text('${expense.title} dismissed')),
                   );
                 },
-                child: ExpenseCard(expense: expense),
+                child: ExpenseCard(
+                  expense: expense,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AddExpensePage(expense: expense),
+                      ),
+                    );
+                  },
+                ),
               );
             },
           );
